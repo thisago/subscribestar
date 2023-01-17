@@ -2,7 +2,7 @@ from std/httpclient import newHttpClient, close, getContent, Http200,
                             newHttpHeaders
 from std/strformat import fmt, `&`
 from std/json import parseJson, `{}`, getStr
-from std/strutils import replace, split, strip
+from std/strutils import replace, split, strip, contains
 from std/htmlparser import parseHtml
 from std/xmltree import innerText
 
@@ -63,6 +63,11 @@ proc extractPosts(star: var Star; cookies: string; pageEndOrderPosition = "") =
         strip
       post.likes = tryParseInt postHtml.between("<span class=\"reaction-title\">Like</span><span class=\"reaction-counter\">(", ")</span>")
       post.dislikes = tryParseInt postHtml.between("<span class=\"reaction-title\">Dislike</span><span class=\"reaction-counter\">(", ")</span>")
+      if "<" in post.name:
+        post.name = post.name.
+          parseHtml.
+          innerText.
+          strip
       if post.name.len == 0:
         post.name = post.description[0..10]
 

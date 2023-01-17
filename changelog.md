@@ -1,5 +1,11 @@
 # Changelog
 
+## Version 1.2.2 (Tuesday 17 Jan 2023)
+
+- Removed the possible HTML in post title
+
+---
+
 ## Version 1.2.1 (Tuesday 17 Jan 2023)
 
 - Set a title to title less posts
