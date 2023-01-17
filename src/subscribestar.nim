@@ -63,6 +63,8 @@ proc extractPosts(star: var Star; cookies: string; pageEndOrderPosition = "") =
         strip
       post.likes = tryParseInt postHtml.between("<span class=\"reaction-title\">Like</span><span class=\"reaction-counter\">(", ")</span>")
       post.dislikes = tryParseInt postHtml.between("<span class=\"reaction-title\">Dislike</span><span class=\"reaction-counter\">(", ")</span>")
+      if post.name.len == 0:
+        post.name = post.description[0..10]
 
     star.posts.add post
   

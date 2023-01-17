@@ -1,5 +1,11 @@
 # Changelog
 
+## Version 1.2.1 (Tuesday 17 Jan 2023)
+
+- Set a title to title less posts
+
+---
+
 ## Version 1.2.0 (Tuesday 17 Jan 2023)
 
 - Fixed extraction skip for posts without video
