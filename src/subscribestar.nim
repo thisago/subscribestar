@@ -9,7 +9,7 @@ from std/xmltree import innerText
 from pkg/useragent import mozilla
 from pkg/util/forStr import between, tryParseInt
 
-import pkg/findxml/findAll
+# import pkg/findxml/findAll
 
 import subscribestar/entToUtf8
 
@@ -55,6 +55,9 @@ proc extractPosts(star: var Star; cookies: string) =
         between("</h1>\n<div>", "</div>\n\n", catchAll = true).
         parseHtml.
         innerText
+      post.likes = tryParseInt postHtml.between("<span class=\"reaction-title\">Like</span><span class=\"reaction-counter\">(", ")</span>")
+      post.dislikes = tryParseInt postHtml.between("<span class=\"reaction-title\">Dislike</span><span class=\"reaction-counter\">(", ")</span>")
+
 
     star.posts.add post
 
@@ -68,7 +71,7 @@ proc extractStar*(starName, cookies: string): Star =
   close client
   block extractStar:
     result.username = starName
-    result.postsQnt = tryParseInt(body.between(" 8 3.58 8 8-3.58 8-8 8z\"/></svg>\n</i>", " posts</div></div>"), -1)
+    result.postsQnt = tryParseInt body.between(" 8 3.58 8 8-3.58 8-8 8z\"/></svg>\n</i>", " posts</div></div>")
     result.name = body.between("\"profile_main_info-name\">", "</div>")
     result.userId = body.between("data-user-id=\"", &"\" alt=\"{result.name}").between("data-user-id=\"", "\"")
     result.avatar = body.between(fmt"data-user-id=""{result.userId}"" alt=""{result.name}"" src=""", "\" />")
@@ -79,5 +82,6 @@ proc extractStar*(starName, cookies: string): Star =
   
 
 when isMainModule:
-  let star = extractStar("cienciadeverdade", "_personalization_id=eyJfcmFpbHMiOnsibWVzc2FnZSI6IklrZDZOVkEyUWpocWNqWlhNM1I2ZUd0MGNHUlFRMUVpIiwiZXhwIjoiMjAyMy0wMi0xNVQxNTo1OToxNS4wMTRaIiwicHVyIjoiY29va2llLl9wZXJzb25hbGl6YXRpb25faWQifX0%3D--45027e5906d71cad227e993793f38a1fd6325903; auth_tracker_code=eyJfcmFpbHMiOnsibWVzc2FnZSI6IkltMDJkWEprYjFJeVYzVkVaazVNTVZKTFJURXJTRVZHTTFSRkx6WkJkakI0ZEdwVlp6Y3ZSVlpOSzJSSVNHaHhhRmxSVVVKNmVXUkpNbEZZWVhnNU0ydFJXbGhRYmxjd1NrUlhRMmhEUWpnME5ERTRiekppT1VWV01HdFZiV3g1VjFCUVRUWnVlbWx3UlRCdllqUmFiMjlUTUhNMVdHaHJSV3hEWVZaSGMxbHdVbXhSZWtvM0x6RlNVVDA5TFMxWFJraHZWbE5RYTNwak4yeElXRVprTFMweFdrd3hhRnAzZW1kcmVtYzJiSFJyVUVsMlIwRlJQVDBpIiwiZXhwIjoiMjAzMy0wMS0xNlQxNjoxNToxMS45MjdaIiwicHVyIjoiY29va2llLmF1dGhfdHJhY2tlcl9jb2RlIn19--9001f9351bd0e41a865ee3f657c324e609729f45" )
-  echo star
+  import std/json
+  let star = extractStar("cienciadeverdade", "_personalization_id=eyJfcmFpbHMiOnsibWVzc2FnZSI6IklrZDZOVkEyUWpocWNqWlhNM1I2ZUd0MGNHUlFRMUVpIiwiZXhwIjoiMjAyMy0wMi0xNlQxNToyMDoyMi40MzNaIiwicHVyIjoiY29va2llLl9wZXJzb25hbGl6YXRpb25faWQifX0%3D--b4a3745fe0a7aee170ba5db4384b119d533869bc; auth_tracker_code=eyJfcmFpbHMiOnsibWVzc2FnZSI6IkluVjFPRFpUS3pkUUt6UTRVREZyWkdsb2QwVkJNV05LYURKNVVFTkRXRTFDVFdkT1YzRlNWMVo1T1dRNWRuQlFRWE5QWTBScVpXODNORFJTYVZGdGJtWXpPREpIUXpKWk1rVldNQ3RtWXpsV2VrTmhOVzkwVVU4MVUxSjJlalJzVGtwd1ExUllibU5pVVROdloxbGpXbFV6YlhRMGNYbzNWR2M0U0hSTmFXUTVlaXR4ZVV3NE4zcHBVVDA5TFMxc05rMXdRMFEwZFhVelprMWhSRzVaTFMxMlpHMDJOakZYTUc1MVF6aFhkSEJsTjNseVNHOUJQVDBpIiwiZXhwIjoiMjAzMy0wMS0xN1QxNToyMDoyMi43NjBaIiwicHVyIjoiY29va2llLmF1dGhfdHJhY2tlcl9jb2RlIn19--7f7496b3d73d47a65370f51034c813af73e05e13")
+  echo pretty %*star
