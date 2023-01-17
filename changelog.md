@@ -1,5 +1,13 @@
 # Changelog
 
+## Version 1.2.0 (Tuesday 17 Jan 2023)
+
+- Fixed extraction skip for posts without video
+- Fixed description extraction
+- Added multi page API extraction
+
+---
+
 ## Version 1.1.0 (Tuesday 17 Jan 2023)
 
 - Added a check if the post doesn't have a video to prevent crash

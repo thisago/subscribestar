@@ -16,7 +16,7 @@ import subscribestar/entToUtf8
 type
   Star* = object
     postsQnt*: int
-    name*, userId*, avatar*, username*: string
+    name*, id*, avatar*, username*: string
     posts*: seq[StarPost]
   StarPost* = object
     name*, description*, publishDate*, id*: string
@@ -28,10 +28,12 @@ when defined release:
 else:
   const url = "http://127.0.0.1:5555/tmp/"
 
-func postsApi(limit: int; userId: string): string =
-  fmt"https://www.subscribestar.com/posts?limit={limit}&star_id={userId}"
+func postsApi(limit: int; id, pageEndOrderPosition: string): string =
+  result = fmt"https://www.subscribestar.com/posts?limit={limit}&star_id={id}"
+  if pageEndOrderPosition.len > 0:
+    result.add fmt"&page_end_order_position={pageEndOrderPosition}"
 
-proc extractPosts(star: var Star; cookies: string) =
+proc extractPosts(star: var Star; cookies: string; pageEndOrderPosition = "") =
   ## Extract the posts of Star
   let client = newHttpClient(headers = newHttpHeaders({
     "User-Agent": mozilla,
@@ -39,29 +41,35 @@ proc extractPosts(star: var Star; cookies: string) =
   }))
   const sep = "%44+_ś%#"
   let
-    resp = client.getContent postsApi(star.postsQnt, star.userId)
+    resp = client.getContent postsApi(star.postsQnt, star.id, pageEndOrderPosition)
     json = parseJson resp
-    htmls = json{"html"}.getStr.replace("</div></div><div class=\"post is-shown", &"</div></div>{sep}<div class=\"post is-shown").split(sep)
+    jsonHtml = json{"html"}.getStr
+    htmls = jsonHtml.replace("</div></div><div class=\"post is-shown", &"</div></div>{sep}<div class=\"post is-shown").split(sep)
   close client
   for postHtml in htmls:
     var post: StarPost
     let dataGallery = postHtml.between("data-gallery=\"", "\" data-preview=").entToUtf8
     if dataGallery.len > 10:
       let json = dataGallery.parseJson{0}
-      block save:
-        post.videoUrl = json{"url"}.getStr
-        post.id = postHtml.between("data-edit-path=\"/posts/", "/edit\"")
-        post.publishDate = postHtml.between(&"<div class=\"post-date\"><a href=\"/posts/{post.id}\">", "</a></div>")
-        post.name = postHtml.between("<html><body>\n<h1>", "</h1>")
-        post.description = postHtml.
-          between("</h1>\n<div>", "</div>\n\n", catchAll = true).
-          parseHtml.
-          innerText.
-          strip
-        post.likes = tryParseInt postHtml.between("<span class=\"reaction-title\">Like</span><span class=\"reaction-counter\">(", ")</span>")
-        post.dislikes = tryParseInt postHtml.between("<span class=\"reaction-title\">Dislike</span><span class=\"reaction-counter\">(", ")</span>")
+      post.videoUrl = json{"url"}.getStr
+    block save:
+      post.id = postHtml.between("data-edit-path=\"/posts/", "/edit\"")
+      post.publishDate = postHtml.between(&"<div class=\"post-date\"><a href=\"/posts/{post.id}\">", "</a></div>")
+      post.name = postHtml.between("<html><body>\n<h1>", "</h1>")
+      post.description = postHtml.
+        between("<html><body>", "</div>", catchAll = true).
+        parseHtml.
+        innerText.
+        strip
+      post.likes = tryParseInt postHtml.between("<span class=\"reaction-title\">Like</span><span class=\"reaction-counter\">(", ")</span>")
+      post.dislikes = tryParseInt postHtml.between("<span class=\"reaction-title\">Dislike</span><span class=\"reaction-counter\">(", ")</span>")
 
     star.posts.add post
+  
+  block getNextPage:
+    let nextPage = jsonHtml.between("href=\"/posts?page_end_order_position=", &"&amp;star_id={star.id}\">")
+    if nextPage.len > 0:
+      extractPosts(star, cookies, nextPage)
 
 proc extractStar*(starName, cookies: string): Star =
   ## Extracts a Subscribestar user
@@ -75,11 +83,11 @@ proc extractStar*(starName, cookies: string): Star =
     result.username = starName
     result.postsQnt = tryParseInt body.between(" 8 3.58 8 8-3.58 8-8 8z\"/></svg>\n</i>", " posts</div></div>")
     result.name = body.between("\"profile_main_info-name\">", "</div>")
-    result.userId = body.between("data-user-id=\"", &"\" alt=\"{result.name}").between("data-user-id=\"", "\"")
-    result.avatar = body.between(fmt"data-user-id=""{result.userId}"" alt=""{result.name}"" src=""", "\" />")
-  
-  # when not defined release:
-  #   result.postsQnt = 1
+    result.id = body.between("data-user-id=\"", &"\" alt=\"{result.name}").between("data-user-id=\"", "\"")
+    result.avatar = body.between(fmt"data-user-id=""{result.id}"" alt=""{result.name}"" src=""", "\" />")
+
+  when not defined release:
+    result.postsQnt = 1
   result.extractPosts cookies
   
 
