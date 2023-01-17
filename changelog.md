@@ -1,6 +1,12 @@
 # Changelog
 
-## Version 1.0.0 (Tuesday 17 Jan 2023)
+## Version 1.1.0 (Tuesday 17 Jan 2023)
+
+- Added a check if the post doesn't have a video to prevent crash
+
+---
+
+## Version 1.0.1 (Tuesday 17 Jan 2023)
 
 - Stripped the description
 

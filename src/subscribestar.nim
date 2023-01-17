@@ -45,19 +45,21 @@ proc extractPosts(star: var Star; cookies: string) =
   close client
   for postHtml in htmls:
     var post: StarPost
-    let json = postHtml.between("data-gallery=\"", "\" data-preview=").entToUtf8.parseJson{0}
-    block save:
-      post.videoUrl = json{"url"}.getStr
-      post.id = postHtml.between("data-edit-path=\"/posts/", "/edit\"")
-      post.publishDate = postHtml.between(&"<div class=\"post-date\"><a href=\"/posts/{post.id}\">", "</a></div>")
-      post.name = postHtml.between("<html><body>\n<h1>", "</h1>")
-      post.description = postHtml.
-        between("</h1>\n<div>", "</div>\n\n", catchAll = true).
-        parseHtml.
-        innerText.
-        strip
-      post.likes = tryParseInt postHtml.between("<span class=\"reaction-title\">Like</span><span class=\"reaction-counter\">(", ")</span>")
-      post.dislikes = tryParseInt postHtml.between("<span class=\"reaction-title\">Dislike</span><span class=\"reaction-counter\">(", ")</span>")
+    let dataGallery = postHtml.between("data-gallery=\"", "\" data-preview=").entToUtf8
+    if dataGallery.len > 10:
+      let json = dataGallery.parseJson{0}
+      block save:
+        post.videoUrl = json{"url"}.getStr
+        post.id = postHtml.between("data-edit-path=\"/posts/", "/edit\"")
+        post.publishDate = postHtml.between(&"<div class=\"post-date\"><a href=\"/posts/{post.id}\">", "</a></div>")
+        post.name = postHtml.between("<html><body>\n<h1>", "</h1>")
+        post.description = postHtml.
+          between("</h1>\n<div>", "</div>\n\n", catchAll = true).
+          parseHtml.
+          innerText.
+          strip
+        post.likes = tryParseInt postHtml.between("<span class=\"reaction-title\">Like</span><span class=\"reaction-counter\">(", ")</span>")
+        post.dislikes = tryParseInt postHtml.between("<span class=\"reaction-title\">Dislike</span><span class=\"reaction-counter\">(", ")</span>")
 
     star.posts.add post
 
@@ -76,8 +78,8 @@ proc extractStar*(starName, cookies: string): Star =
     result.userId = body.between("data-user-id=\"", &"\" alt=\"{result.name}").between("data-user-id=\"", "\"")
     result.avatar = body.between(fmt"data-user-id=""{result.userId}"" alt=""{result.name}"" src=""", "\" />")
   
-  when not defined release:
-    result.postsQnt = 1
+  # when not defined release:
+  #   result.postsQnt = 1
   result.extractPosts cookies
   
 
